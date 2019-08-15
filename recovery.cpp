@@ -898,6 +898,7 @@ static bool yes_no(Device* device, const char* question1, const char* question2)
 
 static bool ask_to_continue_unverified_install(Device* device) {
 #ifdef RELEASE_BUILD
+  (void) device; // silence unused parameter warning
   return false;
 #else
   ui->SetProgressType(RecoveryUI::EMPTY);
@@ -1951,7 +1952,12 @@ int main(int argc, char **argv) {
     }
     sideload_start();
     sideload_wait(false);
+    ui->UpdateScreenOnPrint(true);
     status = sideload_install(&should_wipe_cache, TEMPORARY_INSTALL_FILE, true);
+    if (status == INSTALL_UNVERIFIED && ask_to_continue_unverified_install(device)) {
+      status = sideload_install(&should_wipe_cache, TEMPORARY_INSTALL_FILE, false);
+    }
+    ui->UpdateScreenOnPrint(false);
     sideload_stop();
     if (status == INSTALL_SUCCESS && should_wipe_cache) {
       if (!wipe_cache(false, device)) {
